@@ -4,8 +4,8 @@ services:
   merchandise-service:
     image: ${DOCKER_REGISTRY-}merchandise-service
     build:
-      context: .
-      dockerfile: src/OzonEdu.MerchandiseService/Dockerfile
+      context: ../
+      dockerfile: ./src/OzonEdu.MerchandiseService/Dockerfile
     ports:
       - "80:80"
     depends_on:
