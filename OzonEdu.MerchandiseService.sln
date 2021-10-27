@@ -16,6 +16,16 @@ ProjectSection(SolutionItems) = preProject
 	deploy\docker-compose.yml = deploy\docker-compose.yml
 EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OzonEdu.MerchandiseService.Infrastructure", "src\OzonEdu.MerchandiseService.Infrastructure\OzonEdu.MerchandiseService.Infrastructure.csproj", "{FA1C021D-FED6-4FD6-AF58-12CD666B79F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OzonEdu.MerchandiseService.Grpc", "src\OzonEdu.MerchandiseService.Grpc\OzonEdu.MerchandiseService.Grpc.csproj", "{0448C59F-18FE-44A4-86DB-CEA772A1F4C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OzonEdu.MerchandiseService.HttpClient", "src\OzonEdu.MerchandiseService.HttpClient\OzonEdu.MerchandiseService.HttpClient.csproj", "{47AF48DF-6B12-4D0A-9A57-761681F76A20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OzonEdu.MerchandiseService.HttpModels", "src\OzonEdu.MerchandiseService.HttpModels\OzonEdu.MerchandiseService.HttpModels.csproj", "{0ACC2E45-220D-4623-9621-46F92B3A3150}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OzonEdu.MerchandiseService.GrpcClient", "src\OzonEdu.MerchandiseService.GrpcClient\OzonEdu.MerchandiseService.GrpcClient.csproj", "{A91D634B-8EDA-4131-BC39-C2A02A05EAC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,11 +33,36 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1FB4E90D-1CEA-4A42-ADD2-73FD8E02D6FF} = {DE81ACF3-75F7-49A4-8443-10FDE1DF5614}
+		{FA1C021D-FED6-4FD6-AF58-12CD666B79F5} = {DE81ACF3-75F7-49A4-8443-10FDE1DF5614}
+		{0448C59F-18FE-44A4-86DB-CEA772A1F4C2} = {DE81ACF3-75F7-49A4-8443-10FDE1DF5614}
+		{47AF48DF-6B12-4D0A-9A57-761681F76A20} = {DE81ACF3-75F7-49A4-8443-10FDE1DF5614}
+		{0ACC2E45-220D-4623-9621-46F92B3A3150} = {DE81ACF3-75F7-49A4-8443-10FDE1DF5614}
+		{A91D634B-8EDA-4131-BC39-C2A02A05EAC4} = {DE81ACF3-75F7-49A4-8443-10FDE1DF5614}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{1FB4E90D-1CEA-4A42-ADD2-73FD8E02D6FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1FB4E90D-1CEA-4A42-ADD2-73FD8E02D6FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FB4E90D-1CEA-4A42-ADD2-73FD8E02D6FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FB4E90D-1CEA-4A42-ADD2-73FD8E02D6FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA1C021D-FED6-4FD6-AF58-12CD666B79F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA1C021D-FED6-4FD6-AF58-12CD666B79F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA1C021D-FED6-4FD6-AF58-12CD666B79F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA1C021D-FED6-4FD6-AF58-12CD666B79F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0448C59F-18FE-44A4-86DB-CEA772A1F4C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0448C59F-18FE-44A4-86DB-CEA772A1F4C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0448C59F-18FE-44A4-86DB-CEA772A1F4C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0448C59F-18FE-44A4-86DB-CEA772A1F4C2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47AF48DF-6B12-4D0A-9A57-761681F76A20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47AF48DF-6B12-4D0A-9A57-761681F76A20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47AF48DF-6B12-4D0A-9A57-761681F76A20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47AF48DF-6B12-4D0A-9A57-761681F76A20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0ACC2E45-220D-4623-9621-46F92B3A3150}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0ACC2E45-220D-4623-9621-46F92B3A3150}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0ACC2E45-220D-4623-9621-46F92B3A3150}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0ACC2E45-220D-4623-9621-46F92B3A3150}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A91D634B-8EDA-4131-BC39-C2A02A05EAC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A91D634B-8EDA-4131-BC39-C2A02A05EAC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A91D634B-8EDA-4131-BC39-C2A02A05EAC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A91D634B-8EDA-4131-BC39-C2A02A05EAC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

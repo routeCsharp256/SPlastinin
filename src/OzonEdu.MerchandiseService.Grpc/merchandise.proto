@@ -1,0 +1,26 @@
+﻿syntax = "proto3";
+option csharp_namespace = "OzonEdu.MerchandiseService.Grpc";
+package Merchandise;
+
+import "google/protobuf/empty.proto";
+
+service MerchandiseGrpc {
+  rpc GetMerchListByEmployeeId(GetMerchListRequest) returns (GetMerchListResponse);
+  rpc CreateMerchOrder(CreateMerchOrderRequest) returns (CreateMerchOrderResponse);
+}
+
+message GetMerchListRequest {
+  int64 employee_id = 1;
+}
+
+message GetMerchListResponse {
+  repeated google.protobuf.Empty merch_list = 1;
+}
+
+message CreateMerchOrderRequest {
+  google.protobuf.Empty not_implemented = 1;
+}
+
+message CreateMerchOrderResponse {
+  google.protobuf.Empty not_implemented = 1;
+}
