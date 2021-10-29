@@ -5,7 +5,7 @@ using OzonEdu.MerchandiseService.Infrastructure.Extensions;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.StartupFilters
 {
-    public class LoggingStartupFilter: IStartupFilter
+    public class LoggingStartupFilter : IStartupFilter
     {
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
         {

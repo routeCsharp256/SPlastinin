@@ -12,8 +12,4 @@
       <ProjectReference Include="..\OzonEdu.MerchandiseService.Infrastructure\OzonEdu.MerchandiseService.Infrastructure.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Models" />
-    </ItemGroup>
-
 </Project>
