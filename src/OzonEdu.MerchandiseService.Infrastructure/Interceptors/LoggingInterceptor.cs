@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.Interceptors
 {
-    public class LoggingInterceptor: Interceptor
+    public class LoggingInterceptor : Interceptor
     {
         private readonly ILogger<LoggingInterceptor> _logger;
 

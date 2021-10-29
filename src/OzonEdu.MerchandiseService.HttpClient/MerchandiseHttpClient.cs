@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
@@ -8,7 +7,12 @@ using OzonEdu.MerchandiseService.HttpModels;
 
 namespace OzonEdu.MerchandiseService.HttpClient
 {
-    public class MerchandiseHttpClient
+    public interface IMerchandiseHttpClient
+    {
+        Task<MerchOrderResponse> CreateMerchOrder(MerchOrderPostViewModel model, CancellationToken token);
+        Task<List<MerchItemResponse>> GetMerchListByEmployeeId(int employeeId, CancellationToken token);
+    }
+    public sealed class MerchandiseHttpClient : IMerchandiseHttpClient
     {
         private readonly System.Net.Http.HttpClient _httpClient;
 
@@ -19,14 +23,14 @@ namespace OzonEdu.MerchandiseService.HttpClient
 
         public async Task<MerchOrderResponse> CreateMerchOrder(MerchOrderPostViewModel model, CancellationToken token)
         {
-            var response = await _httpClient.PostAsJsonAsync("v1/api/merch", model, token);
+            using var response = await _httpClient.PostAsJsonAsync("v1/api/merch", model, token);
             var body = await response.Content.ReadAsStringAsync(token);
             return JsonSerializer.Deserialize<MerchOrderResponse>(body);
         }
         
         public async Task<List<MerchItemResponse>> GetMerchListByEmployeeId(int employeeId, CancellationToken token)
         {
-            var response = await _httpClient.GetAsync($"v1/api/merch/{employeeId.ToString()}", token);
+            using var response = await _httpClient.GetAsync($"v1/api/merch/{employeeId.ToString()}", token);
             var body = await response.Content.ReadAsStringAsync(token);
             return JsonSerializer.Deserialize<List<MerchItemResponse>>(body); 
         }
