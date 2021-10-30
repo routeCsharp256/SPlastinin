@@ -33,7 +33,11 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Extensions
                         options.IncludeXmlComments(xmlFilePath);
                     }
                 });
-                services.AddGrpc(options => options.Interceptors.Add<LoggingInterceptor>());
+                services.AddGrpc(options =>
+                {
+                    options.Interceptors.Add<ExceptionInterceptor>();
+                    options.Interceptors.Add<LoggingInterceptor>();
+                });
                 services.AddControllers(options => options.Filters.Add<GlobalExceptionFilter>());
             });
 
