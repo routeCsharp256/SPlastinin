@@ -16,24 +16,33 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Interceptors
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request, ServerCallContext context,
+        public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(TRequest request,
+            ServerCallContext context,
             UnaryServerMethod<TRequest, TResponse> continuation)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                var requestJson = JsonSerializer.Serialize(request);
-                _logger.LogInformation(requestJson);    
-            }
+            LogInformation(request, "Grpc request");
 
-            var response = base.UnaryServerHandler(request, context, continuation);
+            var response = await continuation(request, context);
 
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                var responseJson = JsonSerializer.Serialize(response);
-                _logger.LogInformation(responseJson);
-            }
+            LogInformation(response, "Grpc response");
 
             return response;
+        }
+
+        private void LogInformation<TValue>(TValue value, string message)
+        {
+            try
+            {
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    var valueJson = JsonSerializer.Serialize(value);
+                    _logger.LogInformation($"{message} {valueJson}");
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, $"Could not log {message}");
+            }
         }
     }
 }

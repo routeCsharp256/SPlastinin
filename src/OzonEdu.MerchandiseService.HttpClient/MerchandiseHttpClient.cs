@@ -7,11 +7,6 @@ using OzonEdu.MerchandiseService.HttpModels;
 
 namespace OzonEdu.MerchandiseService.HttpClient
 {
-    public interface IMerchandiseHttpClient
-    {
-        Task<MerchOrderResponse> CreateMerchOrder(MerchOrderPostViewModel model, CancellationToken token);
-        Task<List<MerchItemResponse>> GetMerchListByEmployeeId(int employeeId, CancellationToken token);
-    }
     public sealed class MerchandiseHttpClient : IMerchandiseHttpClient
     {
         private readonly System.Net.Http.HttpClient _httpClient;
