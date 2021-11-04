@@ -9,11 +9,13 @@ WORKDIR /src
 COPY ["src/OzonEdu.MerchandiseService.Grpc/OzonEdu.MerchandiseService.Grpc.csproj", "OzonEdu.MerchandiseService.Grpc/"]
 COPY ["src/OzonEdu.MerchandiseService.HttpModels/OzonEdu.MerchandiseService.HttpModels.csproj", "OzonEdu.MerchandiseService.HttpModels/"]
 COPY ["src/OzonEdu.MerchandiseService.Infrastructure/OzonEdu.MerchandiseService.Infrastructure.csproj", "OzonEdu.MerchandiseService.Infrastructure/"]
+COPY ["src/OzonEdu.MerchandiseService.Domain/OzonEdu.MerchandiseService.Domain.csproj", "OzonEdu.MerchandiseService.Domain/"]
 COPY ["src/OzonEdu.MerchandiseService/OzonEdu.MerchandiseService.csproj", "OzonEdu.MerchandiseService/"]
 RUN dotnet restore "OzonEdu.MerchandiseService/OzonEdu.MerchandiseService.csproj"
 COPY "src/OzonEdu.MerchandiseService.Grpc/." "OzonEdu.MerchandiseService.Grpc/"
 COPY "src/OzonEdu.MerchandiseService.HttpModels/." "OzonEdu.MerchandiseService.HttpModels/"
 COPY "src/OzonEdu.MerchandiseService.Infrastructure/." "OzonEdu.MerchandiseService.Infrastructure/"
+COPY "src/OzonEdu.MerchandiseService.Domain/." "OzonEdu.MerchandiseService.Domain/"
 COPY "src/OzonEdu.MerchandiseService/." "OzonEdu.MerchandiseService/"
 WORKDIR "/src/OzonEdu.MerchandiseService"
 RUN dotnet build "OzonEdu.MerchandiseService.csproj" -c Release -o /app/build
