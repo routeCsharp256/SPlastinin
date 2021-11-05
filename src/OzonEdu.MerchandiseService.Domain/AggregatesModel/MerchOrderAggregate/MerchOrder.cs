@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
-using OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects;
 using OzonEdu.MerchandiseService.Domain.Events.MerchOrderAggregate;
 using OzonEdu.MerchandiseService.Domain.Exceptions;
 using OzonEdu.MerchandiseService.Domain.SeedWork;
@@ -12,29 +11,36 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
     public sealed class MerchOrder : Entity, IAggregateRoot
     {
         public Employee Receiver { get; }
-        public OrderItem Item { get; }
-        public OrderStatus Status { get; private set; }
         public Employee Manager { get; private set; }
-        public string Description { get; private set; }
+        public OrderStatus Status { get; private set; }
         public DateTime StatusDateTime { get; private set; }
-
+        public string StatusDescription { get; private set; }
+        
+        private readonly List<OrderItem> _orderItems;
+        public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
+        
         private MerchOrder()
         {
+            _orderItems = new List<OrderItem>();
             Status = OrderStatus.Draft;
         }
 
-        public MerchOrder(Employee receiver, OrderItem item) : this()
+        public MerchOrder(Employee receiver) : this()
         {
             Receiver = receiver ?? throw new ArgumentNullException(nameof(receiver));
-            Item = item ?? throw new ArgumentNullException(nameof(item));
-            Status = OrderStatus.Created;
         }
 
-        public static MerchOrder Create(Employee receiver, OrderItem item, Employee manager, DateTime utcNow)
+        public void AddOrderItem(long sku, string skuDescription, int quantity, DateTime utcNow)
         {
-            var order = new MerchOrder(receiver, item);
-            order.AssignTo(manager, utcNow);
-            return order;
+            if (!Status.Equals(OrderStatus.Draft) && !Status.Equals(OrderStatus.Created))
+            {
+                ThrowNotAllowedToAddOrderItemException();
+            }
+
+            var orderItem = OrderItem.Create(sku, skuDescription, quantity, utcNow);
+            _orderItems.Add(orderItem);
+            
+            if(Status.Equals(OrderStatus.Draft)) Status = OrderStatus.Created;
         }
 
         public void AssignTo(Employee manager, DateTime utcNow)
@@ -105,7 +111,7 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
 
         private void ChangeStatus(OrderStatus newStatus, string description, DateTime utcNow)
         {
-            Description = description;
+            StatusDescription = description;
             Status = newStatus;
             StatusDateTime = utcNow;
 
@@ -122,6 +128,12 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
         {
             throw new MerchOrderAggregateException(
                 $"Not possible to change the order status to {OrderStatus.Assigned} when {nameof(Manager)} is null");
+        }
+
+        public void ThrowNotAllowedToAddOrderItemException()
+        {
+            throw new MerchOrderAggregateException(
+                $"Not allowed to add items to order with status {Status}");
         }
     }
 }

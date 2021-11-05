@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -13,27 +16,43 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers
         private readonly ILogger<ReserveOrderInStockCommandHandler> _logger;
         private readonly IMerchOrderRepository _merchOrderRepository;
 
-        public ReserveOrderInStockCommandHandler(ILogger<ReserveOrderInStockCommandHandler> logger, IMerchOrderRepository merchOrderRepository)
+        public ReserveOrderInStockCommandHandler(ILogger<ReserveOrderInStockCommandHandler> logger,
+            IMerchOrderRepository merchOrderRepository)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _merchOrderRepository = merchOrderRepository ?? throw new ArgumentNullException(nameof(merchOrderRepository));
+            _merchOrderRepository =
+                merchOrderRepository ?? throw new ArgumentNullException(nameof(merchOrderRepository));
         }
 
         public async Task<Unit> Handle(ReserveOrderInStockCommand request, CancellationToken cancellationToken)
         {
             var order = request.Order;
+            var pendingItems = order.OrderItems.Where(item => item.Status.Equals(OrderItemStatus.Pending));
 
-            _logger.LogInformation($"Grpc call to stock-api to reserve {order.Item}. Order Id: {order.Id}");
+            foreach (var item in pendingItems)
+            {
+                await Task.Delay(300);
 
-            await Task.Delay(3000);
+                bool reserved = (new Random().Next(2) == 1);
 
-            bool reserved = (new Random().Next(2) == 1);
-            
-            if(reserved) order.SetReservedStatus(DateTime.UtcNow);
+                _logger.LogInformation(
+                    $"Grpc call to stock-api to reserve {item.Sku}. Order Id: {order.Id}. Reserved: {reserved}");
+
+                if (reserved)
+                {
+                    item.SetStatusTo(OrderItemStatus.Reserved, DateTime.UtcNow);
+                }
+            }
+
+            // check if there are still Pending items
+            var pendingItemsCount = order.OrderItems.Count(item => item.Status.Equals(OrderItemStatus.Pending));
+
+            if (pendingItemsCount == 0) order.SetReservedStatus(DateTime.UtcNow);
             else order.SetDeferredStatus(DateTime.UtcNow);
+
             await _merchOrderRepository.UpdateAsync(order, cancellationToken);
             await _merchOrderRepository.SaveEntitiesAsync(cancellationToken);
-            
+
             return Unit.Value;
         }
     }

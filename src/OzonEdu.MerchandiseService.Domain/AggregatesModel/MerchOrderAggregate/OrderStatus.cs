@@ -13,10 +13,10 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
             "Waiting for confirmation of stock reserve.");
 
         public static readonly OrderStatus Reserved = new(6, nameof(Reserved),
-            "The merch has been reserved in the stock.");
+            "The order has been reserved in the stock.");
 
         public static readonly OrderStatus Completed = new(7, nameof(Completed),
-            "The merch has been issued to the employee.");
+            "The order has been issued to the employee.");
 
         public static readonly OrderStatus Deferred = new(8, nameof(Deferred),
             "The order has been deferred until the supply of the merch.");

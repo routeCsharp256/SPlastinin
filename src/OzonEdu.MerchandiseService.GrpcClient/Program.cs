@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Protobuf.Collections;
 using Grpc.Net.Client;
 using OzonEdu.MerchandiseService.Grpc;
 
@@ -15,6 +17,14 @@ namespace OzonEdu.MerchandiseService.GrpcClient
             int employeeId = 10;
             try
             {
+                var orderItems = new List<MerchOrderItem>();
+                orderItems.Add(new MerchOrderItem()
+                {
+                    Sku = 1232435567543443554,
+                    SkuDescription = "TShirt Black Size L",
+                    Quantity = 1
+                });
+
                 var request = new CreateMerchOrderRequest()
                 {
                     EmployeeId = employeeId,
@@ -22,9 +32,7 @@ namespace OzonEdu.MerchandiseService.GrpcClient
                     EmployeeLastName = "Ivanov",
                     EmployeeMiddleName = "Jovanovich",
                     EmployeeEmail = "ivan@ivan.ivan",
-                    Sku = 1232435567543443554,
-                    SkuDescription = "TShirt Black Size L",
-                    Quantity = 1,
+                    OrderItems = {orderItems},
                     ManagerId = 6,
                     ManagerFirstName = "Ivan",
                     ManagerLastName = "Ivanov",
@@ -38,10 +46,11 @@ namespace OzonEdu.MerchandiseService.GrpcClient
             {
                 Console.WriteLine(e);
             }
-            
+
             try
             {
-                var response = await client.GetMerchListByEmployeeIdAsync(new GetMerchListRequest(){ EmployeeId = employeeId }, 
+                var response = await client.GetMerchListByEmployeeIdAsync(
+                    new GetMerchListRequest() {EmployeeId = employeeId},
                     cancellationToken: CancellationToken.None);
                 foreach (var item in response.MerchList)
                 {
@@ -52,7 +61,6 @@ namespace OzonEdu.MerchandiseService.GrpcClient
             {
                 Console.WriteLine(e);
             }
-            
         }
     }
 }

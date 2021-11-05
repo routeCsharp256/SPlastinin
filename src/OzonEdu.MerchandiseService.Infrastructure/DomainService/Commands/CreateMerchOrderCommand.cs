@@ -1,5 +1,6 @@
-﻿using MediatR;
-using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
+﻿using System.Collections.Generic;
+using MediatR;
+using OzonEdu.MerchandiseService.HttpModels;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands
 {
@@ -10,9 +11,7 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands
         public string EmployeeFirstName { get; init; }
         public string EmployeeMiddleName { get; init; }
         public string EmployeeEmail { get; init; }
-        public long Sku { get; init; }
-        public string SkuDescription { get; init; }
-        public int Quantity { get; init; }
+        public IEnumerable<MerchItemDto> OrderItems { get; init; }
         public int ManagerId { get; init; }
         public string ManagerLastName { get; init; }
         public string ManagerFirstName { get; init; }

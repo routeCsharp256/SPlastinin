@@ -1,24 +1,33 @@
 ﻿using System;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
-using OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects;
 
 namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggregate
 {
     public sealed class MerchOrderMocks
     {
         public Employee Employee => Employee.Create(1, "Ivan", "Ivanov", "", "test@fake.mail");
-        public OrderItem OrderItem => OrderItem.Create(123456789, "Faked hoody XXXL", 2);
         public Employee Manager => Employee.Create(2, "Petr", "Petrov", "Petrovich", "petr@fake.mail");
         public DateTime UtcNow => new DateTime(2020, 6, 10, 23, 23, 23, 233);
+        public OrderItem OrderItem => OrderItem.Create(123456789, "Faked hoody XXXL", 2, DateTime.UtcNow);
 
         public MerchOrderMocks()
         {
         }
 
+        public MerchOrder DraftOrder
+        {
+            get => new MerchOrder(Employee);
+        }
+
         public MerchOrder CreatedOrder
         {
-            get => new MerchOrder(Employee, OrderItem);
+            get
+            {
+                var order = new MerchOrder(Employee);
+                order.AddOrderItem(123456789, "Faked hoody XXXL", 2, DateTime.UtcNow);
+                return order;
+            }
         }
 
         public MerchOrder AssignedOrder

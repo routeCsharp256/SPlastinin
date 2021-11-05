@@ -4,9 +4,9 @@ using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Queries
 {
-    public class GetCompletedOrdersByEmployeeIdQuery : IRequest<IEnumerable<OrderItem>>
+    public class GetReservedOrdersByEmployeeIdQuery : IRequest<IEnumerable<MerchOrder>>
     {
-        public GetCompletedOrdersByEmployeeIdQuery(int employeeId)
+        public GetReservedOrdersByEmployeeIdQuery(int employeeId)
         {
             EmployeeId = employeeId;
         }

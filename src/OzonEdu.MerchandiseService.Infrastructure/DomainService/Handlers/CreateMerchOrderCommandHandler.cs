@@ -7,8 +7,9 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
-using OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects;
+using OzonEdu.MerchandiseService.HttpModels;
 using OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands;
+using OzonEdu.MerchandiseService.Infrastructure.DomainService.Validators;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers
 {
@@ -35,7 +36,7 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers
 
             try
             {
-                var validateResult = ValidateRequest(request);
+                var validateResult = CreateMerchOrderCommandValidator.ValidateCommand(request);
                 if (validateResult.Count > 0)
                 {
                     return new CreateMerchOrderCommandResponse()
@@ -51,9 +52,16 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers
                 var manager = await FindOrCreateEmployee(request.ManagerId, request.ManagerFirstName,
                     request.ManagerLastName, request.ManagerMiddleName, request.ManagerEmail, cancellationToken);
 
-                var newOrder = MerchOrder.Create(employee,
-                    OrderItem.Create(request.Sku, request.SkuDescription, request.Quantity),
-                    manager, DateTime.UtcNow);
+                var newOrder = new MerchOrder(employee);
+
+                foreach (var orderItem in request.OrderItems)
+                {
+                    newOrder.AddOrderItem(orderItem.Sku, orderItem.Description, orderItem.Quantity, DateTime.UtcNow);
+                }
+
+                newOrder.AssignTo(manager, DateTime.UtcNow);
+
+                await CancelAlreadyIssuedOrderItems(newOrder);
 
                 newOrder = await _merchOrderRepository.AddAsync(newOrder, cancellationToken);
                 await _merchOrderRepository.SaveEntitiesAsync(cancellationToken);
@@ -80,26 +88,47 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers
             return response;
         }
 
-        private Dictionary<string, string> ValidateRequest(CreateMerchOrderCommand request)
+        private async Task CancelAlreadyIssuedOrderItems(MerchOrder order)
         {
-            Dictionary<string, string> result = new();
-
-            if (!Email.IsEmailValid(request.EmployeeEmail))
+            try
             {
-                result[nameof(request.EmployeeEmail)] = "Employee's email is not valid";
-            }
+                List<MerchItemDto> addItemList = new();
+                foreach (var item in order.OrderItems)
+                {
+                    int alreadyIssuedQuantity =
+                        await _merchOrderRepository.GetIssuedToEmployeeQuantityLastYearBySkuAsync(order.Receiver.Id,
+                            item.Sku.Value);
+                    if (alreadyIssuedQuantity >= item.Quantity.Value)
+                    {
+                        item.SetStatusTo(OrderItemStatus.Canceled, DateTime.UtcNow,
+                            $"Merch item has already been issued to employee less than year ago. Issued Quantity: {alreadyIssuedQuantity}");
+                    }
+                    else if (alreadyIssuedQuantity > 0)
+                    {
+                        var newItem = new MerchItemDto()
+                        {
+                            Sku = item.Sku.Value,
+                            Description = item.Sku.Description,
+                            Quantity = item.Quantity.Value - alreadyIssuedQuantity
+                        };
 
-            if (!Email.IsEmailValid(request.ManagerEmail))
+                        addItemList.Add(newItem);
+
+                        item.SetQuantityTo(alreadyIssuedQuantity);
+                        item.SetStatusTo(OrderItemStatus.Canceled, DateTime.UtcNow,
+                            $"Merch item has already been issued to employee less than year ago. Issued Quantity: {alreadyIssuedQuantity}");
+                    }
+                }
+
+                foreach (var item in addItemList)
+                {
+                    order.AddOrderItem(item.Sku, item.Description, item.Quantity, DateTime.UtcNow);
+                }
+            }
+            catch (Exception e)
             {
-                result[nameof(request.ManagerEmail)] = "Manager's email is not valid";
+                _logger.LogError(e.ToString());
             }
-
-            if (request.Quantity <= 0)
-            {
-                result[nameof(request.Quantity)] = "Quantity must be greater than zero";
-            }
-
-            return result;
         }
 
         private async Task<Employee> FindOrCreateEmployee(int id, string firstName, string lastName, string middleName,

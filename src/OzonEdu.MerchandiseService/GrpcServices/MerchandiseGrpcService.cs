@@ -1,8 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Grpc.Core;
 using MediatR;
 using OzonEdu.MerchandiseService.Grpc;
 using Google.Protobuf.WellKnownTypes;
+using OzonEdu.MerchandiseService.HttpModels;
 using OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands;
 using OzonEdu.MerchandiseService.Infrastructure.DomainService.Queries;
 
@@ -28,10 +30,10 @@ namespace OzonEdu.MerchandiseService.GrpcServices
             {
                 response.MerchList.Add(new IssuedMerchItem()
                 {
-                    Sku = item.Item.Sku.Value,
-                    Description = item.Item.Sku.Description,
-                    Quantity = item.Item.Quantity.Value,
-                    IssueDate = Timestamp.FromDateTime(item.IssueDate)
+                    Sku = item.Sku.Value,
+                    Description = item.Sku.Description,
+                    Quantity = item.Quantity.Value,
+                    IssueDate = Timestamp.FromDateTime(item.StatusDate)
                 });
             }
 
@@ -41,6 +43,17 @@ namespace OzonEdu.MerchandiseService.GrpcServices
         public override async Task<CreateMerchOrderResponse> CreateMerchOrder(CreateMerchOrderRequest request,
             ServerCallContext context)
         {
+            var orderItems = new List<MerchItemDto>();
+            foreach (var item in request.OrderItems)
+            {
+                orderItems.Add(new MerchItemDto()
+                {
+                    Sku = item.Sku,
+                    Quantity = item.Quantity,
+                    Description = item.SkuDescription
+                });
+            }
+
             var command = new CreateMerchOrderCommand()
             {
                 EmployeeId = request.EmployeeId,
@@ -48,9 +61,7 @@ namespace OzonEdu.MerchandiseService.GrpcServices
                 EmployeeLastName = request.EmployeeLastName,
                 EmployeeMiddleName = request.EmployeeMiddleName,
                 EmployeeEmail = request.EmployeeEmail,
-                Sku = request.Sku,
-                SkuDescription = request.SkuDescription,
-                Quantity = request.Quantity,
+                OrderItems = orderItems,
                 ManagerId = request.ManagerId,
                 ManagerFirstName = request.ManagerFirstName,
                 ManagerLastName = request.ManagerLastName,

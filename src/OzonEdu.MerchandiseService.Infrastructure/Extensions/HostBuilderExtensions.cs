@@ -51,7 +51,7 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Extensions
                 services.AddSingleton<IMerchOrderRepository, MockMerchOrderRepository>();
             });
 
-            return builder;
+            return builder;   
         }
     }
 }

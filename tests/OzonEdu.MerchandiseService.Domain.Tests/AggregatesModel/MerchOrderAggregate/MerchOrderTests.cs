@@ -20,22 +20,50 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
         {
             //Arrange    
             var employee = _mocks.Employee;
-            var orderItem = _mocks.OrderItem;
-            var manager = _mocks.Manager;
-            var utcNow = _mocks.UtcNow;
 
             //Act 
-            var order1 = new MerchOrder(employee, orderItem);
-            var order2 = MerchOrder.Create(employee, orderItem, manager, utcNow);
+            var order1 = new MerchOrder(employee);
 
             //Assert
             Assert.NotNull(order1);
-            Assert.NotNull(order2);
-            Assert.Throws<ArgumentNullException>(() => new MerchOrder(null, orderItem));
-            Assert.Throws<ArgumentNullException>(() => new MerchOrder(employee, null));
-            Assert.Throws<ArgumentNullException>(() => MerchOrder.Create(null, orderItem, manager, utcNow));
-            Assert.Throws<ArgumentNullException>(() => MerchOrder.Create(employee, null, manager, utcNow));
-            Assert.Throws<ArgumentNullException>(() => MerchOrder.Create(employee, orderItem, null, utcNow));
+            Assert.Throws<ArgumentNullException>(() => new MerchOrder(null));
+        }
+
+        [Fact]
+        public void AddOrderItem_Test()
+        {
+            //Arrange    
+            var orderDraft = _mocks.DraftOrder;
+            var createdOrder = _mocks.CreatedOrder;
+            var orderItem = _mocks.OrderItem;
+            
+            var expectedValueForDraft = 1;
+            
+            //Act
+            orderDraft.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description, orderItem.Quantity.Value, _mocks.UtcNow);
+            createdOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description, orderItem.Quantity.Value, _mocks.UtcNow);
+
+            //Assert
+            Assert.Equal(expectedValueForDraft, orderDraft.OrderItems.Count);
+            Assert.True(createdOrder.OrderItems.Count > expectedValueForDraft);
+            Assert.Throws<MerchOrderAggregateException>(() =>
+                _mocks.AssignedOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
+                    orderItem.Quantity.Value, _mocks.UtcNow));
+            Assert.Throws<MerchOrderAggregateException>(() =>
+                _mocks.InProgressOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
+                    orderItem.Quantity.Value, _mocks.UtcNow));
+            Assert.Throws<MerchOrderAggregateException>(() =>
+                _mocks.DeferredOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
+                    orderItem.Quantity.Value, _mocks.UtcNow));
+            Assert.Throws<MerchOrderAggregateException>(() =>
+                _mocks.ReservedOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
+                    orderItem.Quantity.Value, _mocks.UtcNow));
+            Assert.Throws<MerchOrderAggregateException>(() =>
+                _mocks.CompletedOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
+                    orderItem.Quantity.Value, _mocks.UtcNow));
+            Assert.Throws<MerchOrderAggregateException>(() =>
+                _mocks.CanceledOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
+                    orderItem.Quantity.Value, _mocks.UtcNow));
         }
 
         [Fact]
@@ -108,7 +136,7 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.AssignedOrder.SetDeferredStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.ReservedOrder.SetDeferredStatus(utcNow));
         }
-        
+
         [Fact]
         public void SetReservedStatus_Test()
         {
@@ -168,7 +196,7 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             //Arrange
             var order = _mocks.CreatedOrder;
             var expectedResult = (order.DomainEvents?.Count ?? 0) + 1;
-            
+
             //Act 
             order.AssignTo(_mocks.Manager, _mocks.UtcNow);
 

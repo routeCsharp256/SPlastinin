@@ -30,14 +30,18 @@ message CreateMerchOrderRequest {
   string employee_first_name = 3;
   string employee_middle_name = 4;
   string employee_email = 5;
-  int64 sku = 6;
-  string sku_description = 7;
-  int32 quantity = 8;
-  int32 manager_id = 9;
-  string manager_last_name = 10;
-  string manager_first_name = 11;
-  string manager_middle_name = 12;
-  string manager_email = 13;
+  repeated MerchOrderItem order_items = 6;
+  int32 manager_id = 7;
+  string manager_last_name = 8;
+  string manager_first_name = 9;
+  string manager_middle_name = 10;
+  string manager_email = 11;
+}
+
+message MerchOrderItem {
+  int64 sku = 1;
+  string sku_description = 2;
+  int32 quantity = 3;
 }
 
 message CreateMerchOrderResponse {

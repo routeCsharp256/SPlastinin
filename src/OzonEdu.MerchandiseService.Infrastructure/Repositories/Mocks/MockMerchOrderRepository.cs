@@ -7,7 +7,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
-using OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Mocks
 {
@@ -21,18 +20,41 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Mocks
             _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
             _logger = logger;
 
-            FillByFakedData();
-            FillByFakedData();
-            FillByFakedData();
+            FillByFakedCompletedOrders();
+            FillByFakedCompletedOrders();
+            FillByFakedCompletedOrders();
         }
 
-        public async Task<IEnumerable<OrderItemWithIssueDate>> GetCompletedByEmployeeIdAsync(int employeeId,
+        public async Task<IEnumerable<OrderItem>> GetCompletedByEmployeeIdAsync(int employeeId,
             CancellationToken token = default)
         {
             await Task.Delay(500);
             var items = MockSet.Where(o =>
                 o.Status.Equals(OrderStatus.Completed) && o.Receiver.Id == employeeId
-            ).Select(o => new OrderItemWithIssueDate(o.Item, o.StatusDateTime));
+            ).SelectMany(order => order.OrderItems);
+
+            return items;
+        }
+
+        public async Task<int> GetIssuedToEmployeeQuantityLastYearBySkuAsync(int employeeId, long skuValue)
+        {
+            await Task.Delay(400);
+            return MockSet.Where(order => order.Status.Equals(OrderStatus.Completed)
+                                          && order.Receiver.Id == employeeId
+                                          && order.StatusDateTime >= DateTime.UtcNow.AddYears(-1))
+                .SelectMany(order => order.OrderItems)
+                .Where(item => item.Sku.Value == skuValue && item.Status.Equals(OrderItemStatus.Issued))
+                .Sum(item => item.Quantity.Value);
+        }
+
+        public async Task<IEnumerable<MerchOrder>> GetReservedByEmployeeIdAsync(int employeeId,
+            CancellationToken cancellationToken = default)
+        {
+            await Task.Delay(500);
+            
+            var items = MockSet.Where(o =>
+                o.Status.Equals(OrderStatus.Reserved) && o.Receiver.Id == employeeId
+            );
 
             return items;
         }
@@ -66,25 +88,30 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Mocks
         private string[] skuDescriptions = new[]
             {"TShirt black XL", "Paper Bag Eco", "Silver Fork", "No name shit", "Hoody XXXL"};
 
-        private void FillByFakedData()
+        private void FillByFakedCompletedOrders()
         {
-            int i = 20;
-            while (i-- > 0)
+            int ordersCount = 20;
+            while (ordersCount-- > 0)
             {
-                Employee employee = Employee.Create(i, firstNames[_random.Next(firstNames.Length)],
+                Employee employee = Employee.Create(ordersCount, firstNames[_random.Next(firstNames.Length)],
                     lastNames[_random.Next(lastNames.Length)],
                     middleNames[_random.Next(middleNames.Length)],
                     $"{firstNames[_random.Next(firstNames.Length)]}@{lastNames[_random.Next(lastNames.Length)]}.mail");
 
-                int sku = _random.Next(skuDescriptions.Length);
-                OrderItem orderItem = OrderItem.Create(sku, skuDescriptions[sku], 1 + _random.Next(3));
-
-                Employee manager = Employee.Create(20 + i, firstNames[_random.Next(firstNames.Length)],
+                Employee manager = Employee.Create(20 + ordersCount, firstNames[_random.Next(firstNames.Length)],
                     lastNames[_random.Next(lastNames.Length)],
                     middleNames[_random.Next(middleNames.Length)],
                     $"{firstNames[_random.Next(firstNames.Length)]}@{lastNames[_random.Next(lastNames.Length)]}.mail");
 
-                MerchOrder order = new MerchOrder(employee, orderItem);
+                MerchOrder order = new MerchOrder(employee);
+
+                int itemsCount = 5;
+                while (itemsCount-- > 0)
+                {
+                    int sku = _random.Next(1, skuDescriptions.Length);
+                    order.AddOrderItem(sku, skuDescriptions[sku], 1 + _random.Next(3), DateTime.UtcNow);
+                }
+
                 order.AssignTo(manager, DateTime.UtcNow);
                 order.SetInProgressStatus(DateTime.UtcNow);
                 order.SetReservedStatus(DateTime.UtcNow);

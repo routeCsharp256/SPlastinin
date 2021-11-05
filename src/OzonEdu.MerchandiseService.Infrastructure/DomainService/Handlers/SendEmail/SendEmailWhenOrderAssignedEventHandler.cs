@@ -38,7 +38,6 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers.SendE
                 sb.AppendLine($"Email To Manager: {order.Manager.PersonName} ({order.Manager.Email.Value})");
                 sb.AppendLine($"You are assigned to control the merch order (Id:{order.Id})");
                 sb.AppendLine($"Receiver: {order.Receiver.PersonName} ({order.Receiver.Email.Value})");
-                sb.AppendLine($"Ordered Merch: {order.Item}");
 
                 _logger.LogInformation(sb.ToString());
 

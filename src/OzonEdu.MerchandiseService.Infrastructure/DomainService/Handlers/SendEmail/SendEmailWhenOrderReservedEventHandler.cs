@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,17 +23,21 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers.SendE
             try
             {
                 var order = notification.Order;
+                string itemsInOrder = string.Join(Environment.NewLine, order.OrderItems.Select(i => i.ToString()));
+
                 StringBuilder sb = new();
                 sb.AppendLine($"Email To Employee: {order.Receiver.PersonName} ({order.Receiver.Email.Value})");
-                sb.AppendLine($"Merch has been reserved for you!");
+                sb.AppendLine($"Merch order has been reserved for you!");
                 sb.AppendLine($"OrderId: {order.Id}");
-                sb.AppendLine($"Merch: {order.Item}");
+                sb.AppendLine("Merch items:");
+                sb.AppendLine(itemsInOrder);
                 sb.AppendLine();
                 sb.AppendLine($"Email To Manager: {order.Manager.PersonName} ({order.Manager.Email.Value})");
-                sb.AppendLine($"Merch has been reserved!");
+                sb.AppendLine($"Merch order has been reserved!");
                 sb.AppendLine($"OrderId: {order.Id}");
                 sb.AppendLine($"Employee: {order.Receiver.PersonName} ({order.Receiver.Email.Value})");
-                sb.AppendLine($"Merch: {order.Item}");
+                sb.AppendLine("Merch items:");
+                sb.AppendLine(itemsInOrder);
 
                 _logger.LogInformation(sb.ToString());
 

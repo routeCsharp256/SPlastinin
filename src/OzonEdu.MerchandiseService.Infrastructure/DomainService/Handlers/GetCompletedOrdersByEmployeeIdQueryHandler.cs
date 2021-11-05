@@ -4,23 +4,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
-using OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects;
-using OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands;
 using OzonEdu.MerchandiseService.Infrastructure.DomainService.Queries;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers
 {
-    public class GetCompletedOrdersByEmployeeIdCommandHandler :
-        IRequestHandler<GetCompletedOrdersByEmployeeIdQuery, IEnumerable<OrderItemWithIssueDate>>
+    public class GetCompletedOrdersByEmployeeIdQueryHandler :
+        IRequestHandler<GetCompletedOrdersByEmployeeIdQuery, IEnumerable<OrderItem>>
     {
         private readonly IMerchOrderRepository _merchOrderRepository;
 
-        public GetCompletedOrdersByEmployeeIdCommandHandler(IMerchOrderRepository merchOrderRepository)
+        public GetCompletedOrdersByEmployeeIdQueryHandler(IMerchOrderRepository merchOrderRepository)
         {
             _merchOrderRepository = merchOrderRepository ?? throw new ArgumentNullException(nameof(merchOrderRepository));
         }
 
-        public async Task<IEnumerable<OrderItemWithIssueDate>> Handle(GetCompletedOrdersByEmployeeIdQuery request,
+        public async Task<IEnumerable<OrderItem>> Handle(GetCompletedOrdersByEmployeeIdQuery request,
             CancellationToken cancellationToken)
         {
             return await _merchOrderRepository.GetCompletedByEmployeeIdAsync(request.EmployeeId, cancellationToken);

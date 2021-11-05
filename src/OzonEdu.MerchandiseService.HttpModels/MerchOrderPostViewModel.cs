@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace OzonEdu.MerchandiseService.HttpModels
 {
@@ -14,10 +15,7 @@ namespace OzonEdu.MerchandiseService.HttpModels
         [Required]
         public string EmployeeEmail { get; init; }
         [Required]
-        public long Sku { get; init; }
-        public string SkuDescription { get; init; }
-        [Required]
-        public int Quantity { get; init; }
+        public IEnumerable<MerchItemDto> OrderItems { get; init; }
         [Required]
         public int ManagerId { get; init; }
         [Required]

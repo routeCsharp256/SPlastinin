@@ -8,6 +8,6 @@ namespace OzonEdu.MerchandiseService.HttpClient
     public interface IMerchandiseHttpClient
     {
         Task<MerchOrderResponse> CreateMerchOrder(MerchOrderPostViewModel model, CancellationToken token);
-        Task<List<MerchItemResponse>> GetMerchListByEmployeeId(int employeeId, CancellationToken token);
+        Task<List<MerchItemDto>> GetMerchListByEmployeeId(int employeeId, CancellationToken token);
     }
 }

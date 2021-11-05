@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,14 +23,16 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers.SendE
             try
             {
                 var order = notification.Order;
+                string itemsInOrder = string.Join(Environment.NewLine, order.OrderItems.Select(i => i.ToString()));
                 
                 StringBuilder sb = new();
                 if (order.Receiver != null)
                 {
                     sb.AppendLine($"Email To Employee: {order.Receiver.PersonName} ({order.Receiver.Email.Value})");
                     sb.AppendLine($"Your order has been canceled. OrderId: {order.Id}");
-                    sb.AppendLine($"Reason: {order.Description}");
-                    sb.AppendLine($"Merch: {order.Item}");
+                    sb.AppendLine($"Reason: {order.StatusDescription}");
+                    sb.AppendLine("Merch items:");
+                    sb.AppendLine(itemsInOrder);
                     sb.AppendLine();
                 }
 
@@ -37,9 +40,10 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers.SendE
                 {
                     sb.AppendLine($"Email To Manager: {order.Manager.PersonName} ({order.Manager.Email.Value})");
                     sb.AppendLine($"Order ({order.Id}) has been canceled.");
-                    sb.AppendLine($"Reason: {order.Description}");
-                    sb.AppendLine($"Employee: {order.Receiver.PersonName} ({order.Receiver.Email.Value})");
-                    sb.AppendLine($"Merch: {order.Item}");
+                    sb.AppendLine($"Reason: {order.StatusDescription}");
+                    sb.AppendLine($"Employee: {order.Receiver?.PersonName} ({order.Receiver?.Email.Value})");
+                    sb.AppendLine("Merch items:");
+                    sb.AppendLine(itemsInOrder);
                 }
 
                 _logger.LogInformation(sb.ToString());

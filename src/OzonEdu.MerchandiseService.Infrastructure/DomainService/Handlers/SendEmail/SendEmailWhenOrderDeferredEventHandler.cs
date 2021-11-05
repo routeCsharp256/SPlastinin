@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
 using OzonEdu.MerchandiseService.Infrastructure.DomainService.Events;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers.SendEmail
@@ -22,11 +24,14 @@ namespace OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers.SendE
             try
             {
                 var order = notification.Order;
+                var pendingItems = order.OrderItems.Where(i => i.Status.Equals(OrderItemStatus.Pending));
+
                 StringBuilder sb = new();
                 sb.AppendLine($"Email To Manager: {order.Manager.PersonName} ({order.Manager.Email.Value})");
                 sb.AppendLine($"Order (Id:{order.Id}) has been deferred until the supply of the merch.");
                 sb.AppendLine($"Receiver: {order.Receiver.PersonName} ({order.Receiver.Email.Value})");
-                sb.AppendLine($"Ordered Merch: {order.Item}");
+                sb.AppendLine("Pending items:");
+                sb.AppendLine(string.Join(Environment.NewLine, pendingItems.Select(i => i.ToString())));
 
                 _logger.LogInformation(sb.ToString());
 
