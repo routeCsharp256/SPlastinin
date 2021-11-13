@@ -1,12 +1,17 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
+using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
+using OzonEdu.MerchandiseService.Infrastructure.DomainService.Handlers;
 using OzonEdu.MerchandiseService.Infrastructure.Filters;
 using OzonEdu.MerchandiseService.Infrastructure.Interceptors;
+using OzonEdu.MerchandiseService.Infrastructure.Repositories.Mocks;
 using OzonEdu.MerchandiseService.Infrastructure.StartupFilters;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.Extensions
@@ -39,9 +44,14 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Extensions
                     options.Interceptors.Add<LoggingInterceptor>();
                 });
                 services.AddControllers(options => options.Filters.Add<GlobalExceptionFilter>());
+                
+                services.AddMediatR(typeof(OrderChangeStatusDomainEventHandler).Assembly);
+                
+                services.AddSingleton<IEmployeeRepository, MockEmployeeRepository>();
+                services.AddSingleton<IMerchOrderRepository, MockMerchOrderRepository>();
             });
 
-            return builder;
+            return builder;   
         }
     }
 }

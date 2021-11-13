@@ -23,11 +23,11 @@ namespace OzonEdu.MerchandiseService.HttpClient
             return JsonSerializer.Deserialize<MerchOrderResponse>(body);
         }
         
-        public async Task<List<MerchItemResponse>> GetMerchListByEmployeeId(int employeeId, CancellationToken token)
+        public async Task<List<MerchItemDto>> GetMerchListByEmployeeId(int employeeId, CancellationToken token)
         {
-            using var response = await _httpClient.GetAsync($"v1/api/merch/{employeeId.ToString()}", token);
+            using var response = await _httpClient.GetAsync($"v1/api/merch/employee/{employeeId.ToString()}", token);
             var body = await response.Content.ReadAsStringAsync(token);
-            return JsonSerializer.Deserialize<List<MerchItemResponse>>(body); 
+            return JsonSerializer.Deserialize<List<MerchItemDto>>(body); 
         }
     }
 }
