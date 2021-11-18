@@ -6,6 +6,9 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate
 {
     public interface IEmployeeRepository : IRepository<Employee>
     {
-        Task<Employee> FindByIdAsync(int employeeId, CancellationToken cancellationToken = default);
+        Task<Employee> FindByIdAsync(int employeeId, CancellationToken cancellationToken);
+
+        Task<Employee> FindOrCreateEmployee(int employeeId, string firstName, string lastName, string middleName,
+            string email, CancellationToken cancellationToken);
     }
 }

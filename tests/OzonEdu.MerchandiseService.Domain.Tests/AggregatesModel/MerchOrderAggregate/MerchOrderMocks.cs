@@ -6,8 +6,8 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
 {
     public sealed class MerchOrderMocks
     {
-        public Employee Employee => Employee.Create(1, "Ivan", "Ivanov", "", "test@fake.mail");
-        public Employee Manager => Employee.Create(2, "Petr", "Petrov", "Petrovich", "petr@fake.mail");
+        public Employee Employee => new Employee(1, "Ivan", "Ivanov", "", "test@fake.mail");
+        public Employee Manager => new Employee(2, "Petr", "Petrov", "Petrovich", "petr@fake.mail");
         public DateTime UtcNow => new DateTime(2020, 6, 10, 23, 23, 23, 233);
         public OrderItem OrderItem => OrderItem.Create(123456789, "Faked hoody XXXL", 2, DateTime.UtcNow);
 
@@ -30,22 +30,12 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             }
         }
 
-        public MerchOrder AssignedOrder
+        public MerchOrder InProgressOrder
         {
             get
             {
                 var order = CreatedOrder;
                 order.AssignTo(Manager, UtcNow);
-                return order;
-            }
-        }
-
-        public MerchOrder InProgressOrder
-        {
-            get
-            {
-                var order = AssignedOrder;
-                order.SetInProgressStatus(UtcNow);
                 return order;
             }
         }

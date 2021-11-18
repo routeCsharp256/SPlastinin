@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Grpc.Core;
 using MediatR;
 using OzonEdu.MerchandiseService.Grpc;
 using Google.Protobuf.WellKnownTypes;
 using OzonEdu.MerchandiseService.HttpModels;
-using OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands;
-using OzonEdu.MerchandiseService.Infrastructure.DomainService.Queries;
+using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Commands;
+using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Queries;
+using MerchOrderResponse = OzonEdu.MerchandiseService.Grpc.MerchOrderResponse;
 
 namespace OzonEdu.MerchandiseService.GrpcServices
 {
@@ -19,21 +21,49 @@ namespace OzonEdu.MerchandiseService.GrpcServices
             _mediator = mediator;
         }
 
+        public override async Task<GetMerchOrderListResponse> GetReservedMerchOrdersByEmployeeId(GetMerchListRequest request, ServerCallContext context)
+        {
+            var query = new GetReservedOrdersByEmployeeIdQuery(request.EmployeeId);
+            var orderList = await _mediator.Send(query, context.CancellationToken);
+
+            var response = new GetMerchOrderListResponse();
+            foreach (var item in orderList)
+            {
+                var orderItems = new List<MerchItemResponse>();
+                foreach (var orderItem in item.OrderItems)
+                {
+                    orderItems.Add(new MerchItemResponse()
+                    {
+                        Sku = orderItem.Sku.Value,
+                        Description = orderItem.Sku.Description,
+                        Quantity = orderItem.Quantity.Value
+                    });
+                }
+
+                var order = new MerchOrderResponse();
+                order.OrderId = item.Id;
+                order.MerchList.AddRange(orderItems);
+                response.OrderList.Add(order);
+            }
+
+            return response;
+        }
+
         public override async Task<GetMerchListResponse> GetMerchListByEmployeeId(GetMerchListRequest request,
             ServerCallContext context)
         {
-            var command = new GetCompletedOrdersByEmployeeIdQuery(request.EmployeeId);
-            var skuList = await _mediator.Send(command, context.CancellationToken);
+            var query = new GetCompletedOrdersByEmployeeIdQuery(request.EmployeeId);
+            var skuList = await _mediator.Send(query, context.CancellationToken);
 
             var response = new GetMerchListResponse();
             foreach (var item in skuList)
             {
-                response.MerchList.Add(new IssuedMerchItem()
+                response.MerchList.Add(new MerchItemResponse()
                 {
                     Sku = item.Sku.Value,
                     Description = item.Sku.Description,
                     Quantity = item.Quantity.Value,
-                    IssueDate = Timestamp.FromDateTime(item.StatusDate)
+                    IssueDate = Timestamp.FromDateTime(DateTime.SpecifyKind(item.StatusDate, DateTimeKind.Utc))
                 });
             }
 

@@ -5,8 +5,18 @@ package Merchandise;
 import "google/protobuf/timestamp.proto";
 
 service MerchandiseGrpc {
+  rpc GetReservedMerchOrdersByEmployeeId(GetMerchListRequest) returns (GetMerchOrderListResponse);
   rpc GetMerchListByEmployeeId(GetMerchListRequest) returns (GetMerchListResponse);
   rpc CreateMerchOrder(CreateMerchOrderRequest) returns (CreateMerchOrderResponse);
+}
+
+message GetMerchOrderListResponse {
+  repeated MerchOrderResponse order_list = 1;
+}
+
+message MerchOrderResponse {
+  int32 order_id = 1;
+  repeated MerchItemResponse merch_list = 2;
 }
 
 message GetMerchListRequest {
@@ -14,10 +24,10 @@ message GetMerchListRequest {
 }
 
 message GetMerchListResponse {
-  repeated IssuedMerchItem merch_list = 1;
+  repeated MerchItemResponse merch_list = 1;
 }
 
-message IssuedMerchItem {
+message MerchItemResponse {
   int64 sku = 1;
   string description = 2;
   int32 quantity = 3;

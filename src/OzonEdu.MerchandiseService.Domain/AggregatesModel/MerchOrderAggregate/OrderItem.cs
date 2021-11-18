@@ -6,12 +6,20 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
 {
     public sealed class OrderItem : Entity
     {
-        private OrderItem(Sku sku, Quantity quantity, DateTime utcNow)
+        public OrderItem(
+            int id,
+            Sku sku,
+            Quantity quantity,
+            OrderItemStatus status,
+            DateTime statusDate,
+            string statusDescription)
         {
+            Id = id;
             Sku = sku;
             Quantity = quantity;
-            Status = OrderItemStatus.Pending;
-            StatusDate = utcNow;
+            Status = status;
+            StatusDate = statusDate;
+            StatusDescription = statusDescription;
         }
 
         public Sku Sku { get; }
@@ -20,6 +28,15 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
         public DateTime StatusDate { get; private set; }
         public string StatusDescription { get; private set; }
 
+        private OrderItem(Sku sku, Quantity quantity, DateTime utcNow)
+        {
+            Sku = sku;
+            Quantity = quantity;
+            Status = OrderItemStatus.Pending;
+            StatusDate = utcNow;
+            StatusDescription = Status.DefaultDescription;
+        }
+        
         public static OrderItem Create(long sku, string skuDescription, int quantity, DateTime utcNow)
         {
             return new OrderItem(

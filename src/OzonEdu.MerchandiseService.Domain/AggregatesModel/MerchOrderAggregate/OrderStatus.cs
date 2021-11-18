@@ -6,7 +6,6 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
     {
         public static readonly OrderStatus Draft = new(1, nameof(Draft), nameof(Draft));
         public static readonly OrderStatus Created = new(2, nameof(Created), nameof(Created));
-        public static readonly OrderStatus Assigned = new(3, nameof(Assigned), "Assigned to manager");
         public static readonly OrderStatus Canceled = new(4, nameof(Canceled), nameof(Canceled));
 
         public static readonly OrderStatus InProgress = new(5, nameof(InProgress),
