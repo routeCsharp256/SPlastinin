@@ -6,7 +6,7 @@ using OzonEdu.MerchandiseService.Migrator.Extensions;
 
 namespace OzonEdu.MerchandiseService.Migrator.Migrations
 {
-    [Migration(202111151856)]
+    [Migration(4)]
     public class OrderItemStatusTable : Migration
     {
         private const string orderItemStatusesTableName = "order_item_statuses";

@@ -4,7 +4,7 @@ using OzonEdu.MerchandiseService.Migrator.Extensions;
 
 namespace OzonEdu.MerchandiseService.Migrator.Migrations
 {
-    [Migration(202111151840)]
+    [Migration(1)]
     public class MerchOrderTable : Migration
     {
         private const string merchOrderTableName = "merch_orders";

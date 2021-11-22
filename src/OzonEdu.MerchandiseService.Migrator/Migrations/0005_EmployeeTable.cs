@@ -3,7 +3,7 @@ using OzonEdu.MerchandiseService.Migrator.Extensions;
 
 namespace OzonEdu.MerchandiseService.Migrator.Migrations
 {
-    [Migration(202111151905)]
+    [Migration(5)]
     public class EmployeeTable : Migration
     {
         private const string employeeTableName = "employees";
