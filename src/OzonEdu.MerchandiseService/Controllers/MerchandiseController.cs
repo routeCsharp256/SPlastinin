@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using OzonEdu.MerchandiseService.HttpModels;
-using OzonEdu.MerchandiseService.Infrastructure.DomainService.Commands;
-using OzonEdu.MerchandiseService.Infrastructure.DomainService.Queries;
+using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Commands;
+using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Queries;
 
 namespace OzonEdu.MerchandiseService.Controllers
 {
@@ -67,8 +67,8 @@ namespace OzonEdu.MerchandiseService.Controllers
         public async Task<ActionResult<IEnumerable<MerchItemDto>>> GetMerchListByEmployeeId(int employeeId,
             CancellationToken cancellationToken)
         {
-            var command = new GetCompletedOrdersByEmployeeIdQuery(employeeId);
-            var skuList = await _mediator.Send(command, cancellationToken);
+            var query = new GetCompletedOrdersByEmployeeIdQuery(employeeId);
+            var skuList = await _mediator.Send(query, cancellationToken);
 
             var response = new List<MerchItemDto>();
             foreach (var item in skuList)
@@ -95,8 +95,8 @@ namespace OzonEdu.MerchandiseService.Controllers
             int employeeId,
             CancellationToken cancellationToken)
         {
-            var command = new GetReservedOrdersByEmployeeIdQuery(employeeId);
-            var orderList = await _mediator.Send(command, cancellationToken);
+            var query = new GetReservedOrdersByEmployeeIdQuery(employeeId);
+            var orderList = await _mediator.Send(query, cancellationToken);
 
             var response = new List<ReservedOrderResponse>();
             foreach (var item in orderList)
@@ -104,14 +104,14 @@ namespace OzonEdu.MerchandiseService.Controllers
                 var orderItems = new List<MerchItemDto>();
                 foreach (var orderItem in item.OrderItems)
                 {
-                 orderItems.Add(new MerchItemDto()
-                 {
-                     Sku = orderItem.Sku.Value,
-                     Description = orderItem.Sku.Description,
-                     Quantity = orderItem.Quantity.Value
-                 });   
+                    orderItems.Add(new MerchItemDto()
+                    {
+                        Sku = orderItem.Sku.Value,
+                        Description = orderItem.Sku.Description,
+                        Quantity = orderItem.Quantity.Value
+                    });
                 }
-                
+
                 response.Add(new ReservedOrderResponse()
                 {
                     Id = item.Id,

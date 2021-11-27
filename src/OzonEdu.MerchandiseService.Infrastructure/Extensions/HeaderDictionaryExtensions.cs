@@ -20,8 +20,8 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Extensions
                     sb.Append(keyValuePair.Value.ToString());
                 }
             }
-            
-            return sb.Length == 0 ? "Headers are empty": sb.ToString();
+
+            return sb.Length == 0 ? "Headers are empty" : sb.ToString();
         }
     }
 }

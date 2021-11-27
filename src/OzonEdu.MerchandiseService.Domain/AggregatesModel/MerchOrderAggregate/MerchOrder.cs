@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
@@ -10,15 +11,34 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
 {
     public sealed class MerchOrder : Entity, IAggregateRoot
     {
+        public MerchOrder(
+            int id,
+            Employee receiver,
+            Employee manager,
+            OrderStatus status,
+            DateTime statusDate,
+            string statusDescription,
+            IEnumerable<OrderItem> orderItems)
+        {
+            Id = id;
+            Receiver = receiver;
+            Manager = manager;
+            Status = status;
+            StatusDate = statusDate;
+            StatusDescription = statusDescription;
+            _orderItems = new List<OrderItem>();
+            _orderItems.AddRange(orderItems);
+        }
+
         public Employee Receiver { get; }
         public Employee Manager { get; private set; }
         public OrderStatus Status { get; private set; }
-        public DateTime StatusDateTime { get; private set; }
+        public DateTime StatusDate { get; private set; }
         public string StatusDescription { get; private set; }
-        
+
         private readonly List<OrderItem> _orderItems;
         public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
-        
+
         private MerchOrder()
         {
             _orderItems = new List<OrderItem>();
@@ -39,8 +59,8 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
 
             var orderItem = OrderItem.Create(sku, skuDescription, quantity, utcNow);
             _orderItems.Add(orderItem);
-            
-            if(Status.Equals(OrderStatus.Draft)) Status = OrderStatus.Created;
+
+            if (Status.Equals(OrderStatus.Draft)) Status = OrderStatus.Created;
         }
 
         public void AssignTo(Employee manager, DateTime utcNow)
@@ -51,23 +71,20 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
 
             Manager = manager;
 
-            if (reassign) AddDomainEvent(new OrderReassignedDomainEvent(this));
-            else SetAssignedStatus(utcNow);
+            AddDomainEvent(new OrderAssignedDomainEvent(this));
+            if (!reassign) SetInProgressStatus(utcNow);
         }
 
-        public void SetAssignedStatus(DateTime utcNow)
+        public void SetInProgressStatus(DateTime utcNow)
         {
             if (Manager == null)
             {
-                ThrowStatusChangeToAssignedWithoutManagerException();
+                ThrowStatusChangeToInProgressWithoutManagerException();
             }
 
-            ValidateAndSetStatusTo(OrderStatus.Assigned,
+            ValidateAndSetStatusTo(OrderStatus.InProgress,
                 $"Assigned to manager {Manager.PersonName} ({Manager.Email.Value}).", utcNow);
         }
-
-        public void SetInProgressStatus(DateTime utcNow) =>
-            ValidateAndSetStatusTo(OrderStatus.InProgress, OrderStatus.InProgress.DefaultDescription, utcNow);
 
         public void SetDeferredStatus(DateTime utcNow) =>
             ValidateAndSetStatusTo(OrderStatus.Deferred, OrderStatus.Deferred.DefaultDescription, utcNow);
@@ -93,8 +110,7 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
             new()
             {
                 [OrderStatus.Draft.Id] = new List<int>() {OrderStatus.Created.Id, OrderStatus.Canceled.Id},
-                [OrderStatus.Created.Id] = new List<int>() {OrderStatus.Assigned.Id, OrderStatus.Canceled.Id},
-                [OrderStatus.Assigned.Id] = new List<int>() {OrderStatus.InProgress.Id, OrderStatus.Canceled.Id},
+                [OrderStatus.Created.Id] = new List<int>() {OrderStatus.InProgress.Id, OrderStatus.Canceled.Id},
                 [OrderStatus.InProgress.Id] = new List<int>()
                     {OrderStatus.Deferred.Id, OrderStatus.Reserved.Id, OrderStatus.Canceled.Id},
                 [OrderStatus.Deferred.Id] = new List<int>() {OrderStatus.InProgress.Id, OrderStatus.Canceled.Id},
@@ -113,7 +129,7 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
         {
             StatusDescription = description;
             Status = newStatus;
-            StatusDateTime = utcNow;
+            StatusDate = utcNow;
 
             AddDomainEvent(new OrderChangedStatusDomainEvent(this));
         }
@@ -124,10 +140,10 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
                 $"Not possible to change the order status from {Status} to {statusChangeTo}.");
         }
 
-        private void ThrowStatusChangeToAssignedWithoutManagerException()
+        private void ThrowStatusChangeToInProgressWithoutManagerException()
         {
             throw new MerchOrderAggregateException(
-                $"Not possible to change the order status to {OrderStatus.Assigned} when {nameof(Manager)} is null");
+                $"Not possible to change the order status to {OrderStatus.InProgress} when {nameof(Manager)} is null");
         }
 
         public void ThrowNotAllowedToAddOrderItemException()

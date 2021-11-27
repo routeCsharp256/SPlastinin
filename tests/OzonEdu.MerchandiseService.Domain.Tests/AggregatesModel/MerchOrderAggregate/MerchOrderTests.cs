@@ -47,9 +47,6 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             Assert.Equal(expectedValueForDraft, orderDraft.OrderItems.Count);
             Assert.True(createdOrder.OrderItems.Count > expectedValueForDraft);
             Assert.Throws<MerchOrderAggregateException>(() =>
-                _mocks.AssignedOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
-                    orderItem.Quantity.Value, _mocks.UtcNow));
-            Assert.Throws<MerchOrderAggregateException>(() =>
                 _mocks.InProgressOrder.AddOrderItem(orderItem.Sku.Value, orderItem.Sku.Description,
                     orderItem.Quantity.Value, _mocks.UtcNow));
             Assert.Throws<MerchOrderAggregateException>(() =>
@@ -72,8 +69,8 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             //Arrange    
             var utcNow = _mocks.UtcNow;
             var orderWithoutManager = _mocks.CreatedOrder;
-            var orderWithManager = _mocks.AssignedOrder;
-            var manager = Employee.Create(3, "Sergei", "Sergeev", "Sergeevich", "sergei@fake.mail");
+            var orderWithManager = _mocks.InProgressOrder;
+            var manager = new Employee(3, "Sergei", "Sergeev", "Sergeevich", "sergei@fake.mail");
 
             //Act
             orderWithoutManager.AssignTo(manager, utcNow);
@@ -86,27 +83,12 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
         }
 
         [Fact]
-        public void SetAssignedStatus_Test()
-        {
-            //Arrange    
-            var utcNow = _mocks.UtcNow;
-            var orderWithManager = _mocks.AssignedOrder;
-            var orderWithoutManager = _mocks.CreatedOrder;
-
-            //Act - Assert
-            Assert.True(orderWithManager.Status.Equals(OrderStatus.Assigned));
-            Assert.Throws<MerchOrderAggregateException>(() => orderWithoutManager.SetAssignedStatus(utcNow));
-            Assert.Throws<MerchOrderAggregateException>(() => _mocks.CompletedOrder.SetAssignedStatus(utcNow));
-            Assert.Throws<MerchOrderAggregateException>(() => _mocks.CanceledOrder.SetAssignedStatus(utcNow));
-        }
-
-        [Fact]
         public void SetInProgressStatus_Test()
         {
             //Arrange    
             var utcNow = _mocks.UtcNow;
-            var order = _mocks.AssignedOrder;
-
+            var order = _mocks.DeferredOrder;
+            
             //Act
             order.SetInProgressStatus(utcNow);
 
@@ -133,7 +115,6 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CreatedOrder.SetDeferredStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CanceledOrder.SetDeferredStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CompletedOrder.SetDeferredStatus(utcNow));
-            Assert.Throws<MerchOrderAggregateException>(() => _mocks.AssignedOrder.SetDeferredStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.ReservedOrder.SetDeferredStatus(utcNow));
         }
 
@@ -152,7 +133,6 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CreatedOrder.SetReservedStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CanceledOrder.SetReservedStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CompletedOrder.SetReservedStatus(utcNow));
-            Assert.Throws<MerchOrderAggregateException>(() => _mocks.AssignedOrder.SetReservedStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.DeferredOrder.SetReservedStatus(utcNow));
         }
 
@@ -171,7 +151,6 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.MerchOrderAggr
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CreatedOrder.SetCompletedStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.CanceledOrder.SetCompletedStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.InProgressOrder.SetCompletedStatus(utcNow));
-            Assert.Throws<MerchOrderAggregateException>(() => _mocks.AssignedOrder.SetCompletedStatus(utcNow));
             Assert.Throws<MerchOrderAggregateException>(() => _mocks.DeferredOrder.SetCompletedStatus(utcNow));
         }
 

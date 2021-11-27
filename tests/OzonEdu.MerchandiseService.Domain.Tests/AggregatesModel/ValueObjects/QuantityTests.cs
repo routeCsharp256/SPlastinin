@@ -30,5 +30,21 @@ namespace OzonEdu.MerchandiseService.Domain.Tests.AggregatesModel.ValueObjects
             Assert.Throws<ArgumentException>(() => new Quantity(value1));
             Assert.Throws<ArgumentException>(() => new Quantity(value2));
         }
+        
+        [Fact]
+        public void IsValueValid_Test()
+        {
+            //Arrange    
+            int validValue = 100;
+            int invalidValue = -100;
+            
+            //Act 
+            var validQuantity = Quantity.IsValueValid(validValue);
+            var invalidQuantity = Quantity.IsValueValid(invalidValue);
+
+            //Assert
+            Assert.True(validQuantity, "Must be true, because value is valid");
+            Assert.False(invalidQuantity, "Must be false, because value is invalid");
+        }
     }
 }

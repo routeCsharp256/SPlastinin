@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Google.Protobuf.Collections;
 using Grpc.Net.Client;
 using OzonEdu.MerchandiseService.Grpc;
 
@@ -55,6 +54,25 @@ namespace OzonEdu.MerchandiseService.GrpcClient
                 foreach (var item in response.MerchList)
                 {
                     Console.WriteLine($"{item}");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            
+            try
+            {
+                var response = await client.GetReservedMerchOrdersByEmployeeIdAsync(
+                    new GetMerchListRequest() {EmployeeId = employeeId},
+                    cancellationToken: CancellationToken.None);
+                foreach (var order in response.OrderList)
+                {
+                    Console.WriteLine($"Order Id: {order.OrderId}");
+                    foreach (var item in order.MerchList)
+                    {
+                        Console.WriteLine($"{item}");
+                    }
                 }
             }
             catch (Exception e)

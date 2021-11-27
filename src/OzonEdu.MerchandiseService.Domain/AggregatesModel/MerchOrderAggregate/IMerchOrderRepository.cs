@@ -7,12 +7,13 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
 {
     public interface IMerchOrderRepository : IRepository<MerchOrder>
     {
-        Task<MerchOrder> FindByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<MerchOrder> FindByIdAsync(int orderId, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<OrderItem>> GetCompletedByEmployeeIdAsync(int employeeId,
             CancellationToken cancellationToken = default);
 
-        Task<int> GetIssuedToEmployeeQuantityLastYearBySkuAsync(int employeeId, long skuValue);
+        Task<int> GetIssuedToEmployeeQuantityLastYearBySkuAsync(int employeeId, long skuValue,
+            CancellationToken cancellationToken = default);
 
         Task<IEnumerable<MerchOrder>> GetReservedByEmployeeIdAsync(int employeeId,
             CancellationToken cancellationToken = default);

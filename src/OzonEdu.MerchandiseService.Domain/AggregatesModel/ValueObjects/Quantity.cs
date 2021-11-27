@@ -8,11 +8,17 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects
     {
         public Quantity(int value)
         {
-            if (value <= 0) throw new ArgumentException($"Argument {nameof(value)} must be greater than zero");
+            if(!IsValueValid(value))
+                throw new ArgumentException($"Argument {nameof(value)} must be greater than zero");
 
             Value = value;
         }
 
+        public static bool IsValueValid(int value)
+        {
+            return value > 0;
+        }
+        
         public int Value { get; }
 
         protected override IEnumerable<object> GetEqualityComponents()
