@@ -25,5 +25,7 @@ namespace OzonEdu.MerchandiseService.HttpModels
         public string ManagerMiddleName { get; init; }
         [Required]
         public string ManagerEmail { get; init; }
+        
+        public int MerchOrderType { get; init; }
     }
 }

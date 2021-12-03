@@ -9,24 +9,24 @@ using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Queries;
 
 namespace OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Handlers
 {
-    public class GetReservedOrdersByEmployeeIdQueryHandler : IRequestHandler<GetReservedOrdersByEmployeeIdQuery,
+    public class GetReservedOrdersByEmployeeEmailQueryHandler : IRequestHandler<GetReservedOrdersByEmployeeEmailQuery,
             IEnumerable<MerchOrder>>
     {
         private readonly IMerchOrderRepository _merchOrderRepository;
         private readonly ITracer _tracer;
 
-        public GetReservedOrdersByEmployeeIdQueryHandler(IMerchOrderRepository merchOrderRepository, ITracer tracer)
+        public GetReservedOrdersByEmployeeEmailQueryHandler(IMerchOrderRepository merchOrderRepository, ITracer tracer)
         {
             _merchOrderRepository = merchOrderRepository ?? throw new ArgumentNullException(nameof(merchOrderRepository));
             _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
 
-        public async Task<IEnumerable<MerchOrder>> Handle(GetReservedOrdersByEmployeeIdQuery request,
+        public async Task<IEnumerable<MerchOrder>> Handle(GetReservedOrdersByEmployeeEmailQuery request,
             CancellationToken cancellationToken)
         {
-            using var span = _tracer.BuildSpan(nameof(GetReservedOrdersByEmployeeIdQueryHandler)).StartActive();
+            using var span = _tracer.BuildSpan(nameof(GetReservedOrdersByEmployeeEmailQueryHandler)).StartActive();
             
-            return await _merchOrderRepository.GetReservedByEmployeeIdAsync(request.EmployeeId, cancellationToken);
+            return await _merchOrderRepository.GetReservedByEmployeeEmailAsync(request.Email, cancellationToken);
         }
     }
 }

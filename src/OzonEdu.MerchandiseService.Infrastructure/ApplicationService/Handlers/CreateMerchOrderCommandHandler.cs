@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using OpenTracing;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
 using OzonEdu.MerchandiseService.Domain.SeedWork;
@@ -18,13 +19,15 @@ namespace OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Handlers
         IRequestHandler<CreateMerchOrderCommand, CreateMerchOrderCommandResponse>
     {
         private readonly ILogger<CreateMerchOrderCommandHandler> _logger;
+        private readonly ITracer _tracer;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMerchOrderRepository _merchOrderRepository;
         private readonly IEmployeeRepository _employeeRepository;
 
         public CreateMerchOrderCommandHandler(IMerchOrderRepository merchOrderRepository,
             IEmployeeRepository employeeRepository, IUnitOfWork unitOfWork,
-            ILogger<CreateMerchOrderCommandHandler> logger)
+            ILogger<CreateMerchOrderCommandHandler> logger,
+            ITracer tracer)
         {
             _merchOrderRepository =
                 merchOrderRepository ?? throw new ArgumentNullException(nameof(merchOrderRepository));
@@ -32,11 +35,14 @@ namespace OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Handlers
 
             _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
 
         public async Task<CreateMerchOrderCommandResponse> Handle(CreateMerchOrderCommand request,
             CancellationToken cancellationToken)
         {
+            using var span = _tracer.BuildSpan(nameof(CreateMerchOrderCommandHandler)).StartActive();
+            
             CreateMerchOrderCommandResponse response = null;
 
             try

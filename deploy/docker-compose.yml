@@ -2,21 +2,30 @@
 
 services:
   merchandise-service:
-    image: ${DOCKER_REGISTRY-}merchandise-service
     build:
       context: ../
       dockerfile: ./src/OzonEdu.MerchandiseService/Dockerfile
-    hostname: merchandise-service
     environment:
-      DatabaseConnectionOptions__ConnectionString: "Host=host.docker.internal;Port=5428;Database=merchandise-service;Username=postgres;Password=merchandiseServicePassword"
+      DatabaseConnectionOptions__ConnectionString: "Host=merchandise-service-db;Port=5432;Database=merchandise-service;Username=postgres;Password=merchandiseServicePassword"
+      StockApiGrpcServiceConfiguration__ServerAddress: "http://stock-api:82"
+      JaegerOptions__Hostname: "jaeger"
+      JaegerOptions__Port: 6831
+      KafkaOptions__BootstrapServers: "broker:29092"
+      KafkaOptions__EmailNotificationTopic: "email_notification_event"
+      KafkaOptions__StockReplenishedTopic: "stock_replenished_event"
+      KafkaOptions__EmployeeNotificationTopic: "employee_notification_event"
+      KafkaOptions__ConsumerGroupId: "merchandise-service"
     ports:
       - "80:80"
+      - "82:82"
     depends_on:
       - merchandise-service-db
-      - supply-service
-      - emailing-service
-      - employees-service
       - stock-api
+      - zookeeper
+      - broker
+      - jaeger
+    networks:
+      - ozon-network
 
   merchandise-service-db:
     image: postgres:latest
@@ -26,43 +35,102 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: merchandiseServicePassword
       POSTGRES_DB: merchandise-service
-  
-  supply-service:
-    image: ghcr.io/ozon-edu-csharp-2021/supply-service:main
-    environment:
-      DbConfiguration__ConnectionString: "Host=host.docker.internal;Port=5426;Database=supply-service;Username=postgres;Password=supplyServicePassword"
-    hostname: supply-service
-    depends_on:
-      - supply-service-db
-
-  emailing-service:
-    image: ghcr.io/ozon-edu-csharp-2021/emailing-service:main
-    hostname: emailing-service
-
-  employees-service:
-    image: ghcr.io/ozon-edu-csharp-2021/employees-service:main
-    hostname: employees-service
-    depends_on:
-      - employees-service-postgres-db
-    volumes:
-      - ./src:/src
+    networks:
+      - ozon-network
 
   stock-api:
     image: ghcr.io/ozon-edu-csharp-2021/stock-api:main
-    hostname: stock-api
+    ports:
+      - "5070:80"
+      - "5072:82"
+    networks:
+      - ozon-network
     environment:
-      DatabaseConnectionOptions__ConnectionString: "Host=host.docker.internal;Port=5427;Database=stock-api;Username=postgres;Password=stockApiPassword"
+      DatabaseConnectionOptions__ConnectionString: "Host=stock-api-db;Port=5432;Database=stock-api;Username=postgres;Password=stockApiPassword"
+      BootstrapServers: "broker:29092"
+      topic: "stock_replenished_event"
+      groupId : "stock-api-service"
+      SupplyApiGrpcServiceConfiguration__ServerAddress: "http://supply-service-api:5082"
     depends_on:
       - stock-api-db
+      - redis
+      - supply-service-api
+      - zookeeper
+      - broker
 
-  supply-service-db:
+  supply-service-api:
+    image: ghcr.io/ozon-edu-csharp-2021/supply-service:main
+    ports:
+      - "5080:5080"
+      - "5082:5082"
+    environment:
+      DbConfiguration__ConnectionString: "Host=supply-service-db;Port=5432;Database=supply-service;Username=postgres;Password=supplyServicePassword"
+      KafkaConfiguration__BootstrapServers: "broker:29092"
+    networks:
+      - ozon-network
+    depends_on:
+      - supply-service-db
+      - zookeeper
+      - broker
+
+  employees-service:
+    image: ghcr.io/ozon-edu-csharp-2021/employees-service:main
+    ports:
+      - "8443:80"
+    environment:
+      ConnectionString: "Host=employees-service-postgres-db;Port=5432;Database=employees-service;Username=postgres;Password=employeeServicePassword;"
+      BootstrapServers: "broker:29092"
+      Topic: "employee_notification_event"
+    networks:
+      - ozon-network
+    depends_on:
+      - employees-service-postgres-db
+      - zookeeper
+      - broker
+    volumes:
+      - employees-service:/src"
+
+  emailing-service:
+    image: ghcr.io/ozon-edu-csharp-2021/emailing-service:main
+    ports:
+      - "8555:80"
+    environment:
+      KafkaTopics__EmployeeNotificationEventTopic: "employee_notification_event"
+    depends_on:
+      - zookeeper
+      - broker
+    volumes:
+      - emailing-service:/src
+    networks:
+      - ozon-network
+
+  stock-api-db:
     image: postgres:latest
     ports:
       - "5426:5432"
     environment:
       POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: stockApiPassword
+      POSTGRES_DB: stock-api
+    command: "-c log_statement=all"
+    networks:
+      - ozon-network
+    volumes:
+      - stock-api-db:/var/lib/postgresql/data
+
+  supply-service-db:
+    image: postgres:latest
+    ports:
+      - "5427:5432"
+    environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: supplyServicePassword
       POSTGRES_DB: supply-service
+    command: "-c log_statement=all"
+    networks:
+      - ozon-network
+    volumes:
+      - supply-service-db:/var/lib/postgresql/data
 
   employees-service-postgres-db:
     image: postgres:latest
@@ -70,16 +138,76 @@ services:
       - "5425:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: employeeServicePassword
       POSTGRES_DB: employees-service
     volumes:
-      - ./db/employees-service-postgres-db/dbdata:/var/lib/postgresql/data"
+      - employees-service-postgres-db:/var/lib/postgresql/data"
+    command: "-c log_statement=all"
+    networks:
+      - ozon-network
 
-  stock-api-db:
-    image: postgres:latest
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.2.0
+    hostname: zookeeper
+    container_name: zookeeper
     ports:
-      - "5427:5432"
+      - "2181:2181"    
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: stockApiPassword
-      POSTGRES_DB: stock-api
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ozon-network
+
+  broker:
+    image: confluentinc/cp-kafka:6.2.0
+    container_name: broker
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - ozon-network
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ozon-network
+    hostname: redis
+
+  jaeger:
+    image: jaegertracing/all-in-one
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+    networks:
+      - ozon-network
+    hostname: jaeger
+
+networks:
+  ozon-network:
+    driver: bridge
+
+volumes:
+  ozon-volume:
+    driver: local
+  employees-service:
+    driver: local
+  emailing-service:
+    driver: local
+  stock-api-db:
+    driver: local
+  supply-service-db:
+    driver: local
+  employees-service-postgres-db:
+    driver: local

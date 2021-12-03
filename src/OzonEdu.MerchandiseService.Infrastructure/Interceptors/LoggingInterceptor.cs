@@ -36,12 +36,12 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Interceptors
                 if (_logger.IsEnabled(LogLevel.Information))
                 {
                     var valueJson = JsonSerializer.Serialize(value);
-                    _logger.LogInformation($"{message} {valueJson}");
+                    _logger.LogInformation("{Message} {Value}", message, valueJson);
                 }
             }
             catch (Exception e)
             {
-                _logger.LogError(e, $"Could not log {message}");
+                _logger.LogError(e, "Could not log {Message}", message);
             }
         }
     }

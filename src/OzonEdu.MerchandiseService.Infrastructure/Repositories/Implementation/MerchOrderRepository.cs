@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
+using Microsoft.Extensions.Logging;
 using Npgsql;
+using OpenTracing;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.ValueObjects;
@@ -19,18 +21,24 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
     {
         private readonly IDbConnectionFactory<NpgsqlConnection> _dbConnectionFactory;
         private readonly IChangeTracker _changeTracker;
+        private readonly ITracer _tracer;
+        private readonly ILogger<MerchOrderRepository> _logger;
 
         public MerchOrderRepository(IDbConnectionFactory<NpgsqlConnection> dbConnectionFactory,
-            IChangeTracker changeTracker)
+            IChangeTracker changeTracker, ITracer tracer, ILogger<MerchOrderRepository> logger)
         {
             _dbConnectionFactory = dbConnectionFactory ?? throw new ArgumentNullException(nameof(dbConnectionFactory));
             _changeTracker = changeTracker ?? throw new ArgumentNullException(nameof(changeTracker));
+            _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         private const int Timeout = 5;
 
         public async Task<MerchOrder> AddAsync(MerchOrder itemToAdd, CancellationToken cancellationToken = default)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(AddAsync)}").StartActive();
+            
             if (!itemToAdd.IsTransient())
             {
                 _changeTracker.Track(itemToAdd);
@@ -95,6 +103,8 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
         public async Task<MerchOrder> UpdateAsync(MerchOrder itemToUpdate,
             CancellationToken cancellationToken = default)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(UpdateAsync)}").StartActive();
+            
             const string sql = @"
                 UPDATE merch_orders 
                 SET receiver_id = @ReceiverId, manager_id = @ManagerId, 
@@ -157,6 +167,8 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
         private async Task<IEnumerable<OrderItem>> GetOrderItemsByOrderId(int orderId,
             CancellationToken cancellationToken)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(GetOrderItemsByOrderId)}").StartActive();
+            
             const string sql = @"
                 SELECT id, order_id, sku, sku_description, quantity, 
                        status_id as id, status_date, status_description
@@ -194,8 +206,12 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
 
         public async Task<MerchOrder> FindByIdAsync(int orderId, CancellationToken cancellationToken = default)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(FindByIdAsync)}").StartActive();
+            
             var orderItems = await GetOrderItemsByOrderId(orderId, cancellationToken);
-
+            
+            _logger.LogInformation("Order items: {@items}", orderItems);
+            
             const string sql = @"
                 SELECT merch_orders.id, 
                        status_id, 
@@ -250,15 +266,68 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
                             return order;
                         });
 
+            _logger.LogInformation("Orders: {@merchOrders}", merchOrders);
+            
             var merchOrder = merchOrders.FirstOrDefault();
             if (merchOrder != null) _changeTracker.Track(merchOrder);
 
             return merchOrder;
         }
 
+        public async Task<IEnumerable<OrderItem>> GetCompletedByEmployeeEmailAsync(string email,
+            CancellationToken cancellationToken = default)
+        {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(GetCompletedByEmployeeEmailAsync)}").StartActive();
+            
+            const string sql = @"
+                SELECT order_items.id, 
+                       order_items.order_id, 
+                       order_items.sku, 
+                       order_items.sku_description, 
+                       order_items.quantity, 
+                       order_items.status_id as id,
+                       order_items.status_date, 
+                       order_items.status_description
+                FROM merch_orders
+                INNER JOIN order_items ON merch_orders.id = order_items.order_id
+                INNER JOIN employees ON employees.id = merch_orders.receiver_id 
+                WHERE employees.email = @EmployeeEmail and order_items.status_id = @StatusId;";
+
+            var parameters = new
+            {
+                EmployeeEmail = email,
+                StatusId = OrderItemStatus.Issued.Id
+            };
+
+            var commandDefinition = new CommandDefinition(
+                sql,
+                parameters: parameters,
+                commandTimeout: Timeout,
+                cancellationToken: cancellationToken);
+
+            var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+            var orderItems =
+                await connection.QueryAsync<OrderItemQueryModel, StatusQueryModel, OrderItem>(
+                    commandDefinition,
+                    (orderItemModel, statusModel) =>
+                    {
+                        return new OrderItem(
+                            orderItemModel.Id,
+                            new Sku(orderItemModel.Sku, orderItemModel.SkuDescription),
+                            new Quantity(orderItemModel.Quantity),
+                            Enumeration.FromValue<OrderItemStatus>(statusModel.Id),
+                            statusModel.StatusDate,
+                            statusModel.StatusDescription);
+                    });
+
+            return orderItems;
+        }
+        
         public async Task<IEnumerable<OrderItem>> GetCompletedByEmployeeIdAsync(int employeeId,
             CancellationToken cancellationToken = default)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(GetCompletedByEmployeeIdAsync)}").StartActive();
+            
             const string sql = @"
                 SELECT order_items.id, 
                        order_items.order_id, 
@@ -305,6 +374,8 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
         public async Task<int> GetIssuedToEmployeeQuantityLastYearBySkuAsync(int employeeId, long skuValue,
             CancellationToken cancellationToken)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(GetIssuedToEmployeeQuantityLastYearBySkuAsync)}").StartActive();
+            
             const string sql = @"
                 SELECT SUM(order_items.quantity)
                 FROM merch_orders
@@ -336,6 +407,8 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
         public async Task<IEnumerable<MerchOrder>> GetReservedByEmployeeIdAsync(int employeeId,
             CancellationToken cancellationToken = default)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(GetReservedByEmployeeIdAsync)}").StartActive();
+            
             const string sql = @"
                 SELECT id FROM merch_orders
                 WHERE receiver_id = @EmployeeId and status_id = @StatusId;";
@@ -343,6 +416,45 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Repositories.Implementation
             var parameters = new
             {
                 EmployeeId = employeeId,
+                StatusId = OrderStatus.Reserved.Id
+            };
+
+            var commandDefinition = new CommandDefinition(
+                sql,
+                parameters: parameters,
+                commandTimeout: Timeout,
+                cancellationToken: cancellationToken);
+
+            var connection = await _dbConnectionFactory.CreateConnection(cancellationToken);
+            var merchOrderIds = await connection.QueryAsync<int>(commandDefinition);
+
+            var merchOrders = new List<MerchOrder>();
+
+            foreach (var orderId in merchOrderIds)
+            {
+                var order = await FindByIdAsync(orderId, cancellationToken);
+                
+                _logger.LogInformation("Order {@order}", order);
+                
+                merchOrders.Add(order);
+            }
+
+            return merchOrders;
+        }
+        
+        public async Task<IEnumerable<MerchOrder>> GetReservedByEmployeeEmailAsync(string email,
+            CancellationToken cancellationToken = default)
+        {
+            using var span = _tracer.BuildSpan($"{nameof(MerchOrderRepository)}.{nameof(GetReservedByEmployeeIdAsync)}").StartActive();
+            
+            const string sql = @"
+                SELECT id FROM merch_orders
+                INNER JOIN employees ON employees.id = receiver_id
+                WHERE employees.email = @EmployeeEmail and status_id = @StatusId;";
+
+            var parameters = new
+            {
+                EmployeeEmail = email,
                 StatusId = OrderStatus.Reserved.Id
             };
 

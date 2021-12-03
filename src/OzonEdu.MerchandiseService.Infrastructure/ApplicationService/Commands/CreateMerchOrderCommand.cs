@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using CSharpCourse.Core.Lib.Enums;
 using MediatR;
 using OzonEdu.MerchandiseService.HttpModels;
 
@@ -17,5 +18,7 @@ namespace OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Commands
         public string ManagerFirstName { get; init; }
         public string ManagerMiddleName { get; init; }
         public string ManagerEmail { get; init; }
+        
+        public MerchType MerchPackType { get; set; }
     }
 }
