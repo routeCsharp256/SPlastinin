@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
+using OpenTracing;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate;
 using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Queries;
 
@@ -12,15 +13,20 @@ namespace OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Handlers
         IRequestHandler<GetCompletedOrdersByEmployeeIdQuery, IEnumerable<OrderItem>>
     {
         private readonly IMerchOrderRepository _merchOrderRepository;
+        private readonly ITracer _tracer;
 
-        public GetCompletedOrdersByEmployeeIdQueryHandler(IMerchOrderRepository merchOrderRepository)
+        public GetCompletedOrdersByEmployeeIdQueryHandler(IMerchOrderRepository merchOrderRepository,
+            ITracer tracer)
         {
             _merchOrderRepository = merchOrderRepository ?? throw new ArgumentNullException(nameof(merchOrderRepository));
+            _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
 
         public async Task<IEnumerable<OrderItem>> Handle(GetCompletedOrdersByEmployeeIdQuery request,
             CancellationToken cancellationToken)
         {
+            using var span = _tracer.BuildSpan(nameof(GetCompletedOrdersByEmployeeIdQueryHandler)).StartActive();
+            
             return await _merchOrderRepository.GetCompletedByEmployeeIdAsync(request.EmployeeId, cancellationToken);
         }
     }

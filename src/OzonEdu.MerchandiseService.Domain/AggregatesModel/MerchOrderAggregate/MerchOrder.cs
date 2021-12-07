@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using CSharpCourse.Core.Lib.Enums;
 using OzonEdu.MerchandiseService.Domain.AggregatesModel.EmployeeAggregate;
 using OzonEdu.MerchandiseService.Domain.Events.MerchOrderAggregate;
 using OzonEdu.MerchandiseService.Domain.Exceptions;
@@ -35,6 +36,7 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
         public OrderStatus Status { get; private set; }
         public DateTime StatusDate { get; private set; }
         public string StatusDescription { get; private set; }
+        public MerchType MerchPackType { get; private set; }
 
         private readonly List<OrderItem> _orderItems;
         public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
@@ -63,6 +65,56 @@ namespace OzonEdu.MerchandiseService.Domain.AggregatesModel.MerchOrderAggregate
             if (Status.Equals(OrderStatus.Draft)) Status = OrderStatus.Created;
         }
 
+        public void SetMerchPackType(MerchType packType, DateTime utcNow)
+        {
+            MerchPackType = packType;
+            _orderItems.Clear();
+
+            switch (packType)
+            {
+                case MerchType.WelcomePack:
+                    AddWelcomePackItems(utcNow);
+                    break;
+                case MerchType.ProbationPeriodEndingPack:
+                    AddProbationPeriodEndingPackItems(utcNow);
+                    break;
+                case MerchType.ConferenceListenerPack:
+                    AddConferenceListenerPackItems(utcNow);
+                    break;
+                case MerchType.ConferenceSpeakerPack:
+                    AddConferenceSpeakerPackItems(utcNow);
+                    break;
+                case MerchType.VeteranPack:
+                    AddVeteranPackItems(utcNow);
+                    break;
+            }
+        }
+
+        private void AddWelcomePackItems(DateTime utcNow)
+        {
+            _orderItems.Add(OrderItem.Create(1, "TShirtStarter", 1, utcNow));
+        }
+        
+        private void AddProbationPeriodEndingPackItems(DateTime utcNow)
+        {
+            _orderItems.Add(OrderItem.Create(7, "TShirtAfterProbation", 1, utcNow));
+        }
+        
+        private void AddConferenceListenerPackItems(DateTime utcNow)
+        {
+            _orderItems.Add(OrderItem.Create(25, "TShirtСonferenceListener", 1, utcNow));
+        }
+        
+        private void AddConferenceSpeakerPackItems(DateTime utcNow)
+        {
+            _orderItems.Add(OrderItem.Create(19, "SweatshirtСonferenceSpeaker", 1, utcNow));
+        }
+        
+        private void AddVeteranPackItems(DateTime utcNow)
+        {
+            _orderItems.Add(OrderItem.Create(1, "TShirtVeteran", 1, utcNow));
+        }
+        
         public void AssignTo(Employee manager, DateTime utcNow)
         {
             if (manager == null) throw new ArgumentNullException(nameof(manager));

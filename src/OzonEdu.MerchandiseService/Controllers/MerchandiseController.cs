@@ -1,11 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using OpenTracing;
 using OzonEdu.MerchandiseService.HttpModels;
 using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Commands;
 using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Queries;
+using ILogger = Serilog.ILogger;
 
 namespace OzonEdu.MerchandiseService.Controllers
 {
@@ -15,10 +20,14 @@ namespace OzonEdu.MerchandiseService.Controllers
     public class MerchandiseController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly ITracer _tracer;
+        private readonly ILogger<MerchandiseController> _logger;
 
-        public MerchandiseController(IMediator mediator)
+        public MerchandiseController(IMediator mediator, ITracer tracer, ILogger<MerchandiseController> logger)
         {
-            _mediator = mediator;
+            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+            _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
@@ -28,9 +37,12 @@ namespace OzonEdu.MerchandiseService.Controllers
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>MerchOrderResponse</returns>
         [HttpPost]
-        public async Task<ActionResult<MerchOrderResponse>> CreateMerchOrder([FromBody] MerchOrderPostViewModel model,
+        public async Task<ActionResult<MerchOrderResponse>> CreateMerchOrder(MerchOrderPostViewModel model,
             CancellationToken cancellationToken = default)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchandiseController)}.{nameof(CreateMerchOrder)}")
+                .StartActive();
+
             var command = new CreateMerchOrderCommand()
             {
                 EmployeeId = model.EmployeeId,
@@ -67,7 +79,40 @@ namespace OzonEdu.MerchandiseService.Controllers
         public async Task<ActionResult<IEnumerable<MerchItemDto>>> GetMerchListByEmployeeId(int employeeId,
             CancellationToken cancellationToken)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchandiseController)}.{nameof(GetMerchListByEmployeeId)}")
+                .StartActive();
+
             var query = new GetCompletedOrdersByEmployeeIdQuery(employeeId);
+            var skuList = await _mediator.Send(query, cancellationToken);
+
+            var response = new List<MerchItemDto>();
+            foreach (var item in skuList)
+            {
+                response.Add(new MerchItemDto()
+                {
+                    Sku = item.Sku.Value,
+                    Description = item.Sku.Description,
+                    Quantity = item.Quantity.Value,
+                    IssueDate = item.StatusDate
+                });
+            }
+
+            return response;
+        }
+
+        /// <summary>
+        /// Returns a list of merch passed to an employee.
+        /// </summary>
+        /// <param name="email">Email</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        [HttpGet("employee/{email}")]
+        public async Task<ActionResult<IEnumerable<MerchItemDto>>> GetMerchListByEmployeeEmail(string email,
+            CancellationToken cancellationToken)
+        {
+            using var span = _tracer.BuildSpan($"{nameof(MerchandiseController)}.{nameof(GetMerchListByEmployeeEmail)}")
+                .StartActive();
+
+            var query = new GetCompletedOrdersByEmployeeEmailQuery(email);
             var skuList = await _mediator.Send(query, cancellationToken);
 
             var response = new List<MerchItemDto>();
@@ -95,10 +140,18 @@ namespace OzonEdu.MerchandiseService.Controllers
             int employeeId,
             CancellationToken cancellationToken)
         {
+            using var span = _tracer
+                .BuildSpan($"{nameof(MerchandiseController)}.{nameof(GetReservedMerchOrdersByEmployeeId)}")
+                .StartActive();
+
             var query = new GetReservedOrdersByEmployeeIdQuery(employeeId);
             var orderList = await _mediator.Send(query, cancellationToken);
+            
+            _logger.LogInformation("GetReservedMerchOrdersByEmployeeId {EmployeeId}. Order list: {@OrderList}",
+                employeeId.ToString(), orderList);
 
             var response = new List<ReservedOrderResponse>();
+            
             foreach (var item in orderList)
             {
                 var orderItems = new List<MerchItemDto>();

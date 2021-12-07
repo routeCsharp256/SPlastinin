@@ -38,17 +38,9 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Middlewares
         {
             try
             {
-                StringBuilder sb = new();
-                sb.Append("Response ")
-                    .Append(context.Response?.StatusCode.ToString())
-                    .Append(" for ")
-                    .Append(context.Request?.Method)
-                    .Append(" ")
-                    .Append(context.Request?.Path.Value)
-                    .Append(Environment.NewLine)
-                    .Append(context.Response?.Headers.FormatHeaders());
-                
-                _logger.LogInformation(sb.ToString());
+                _logger.LogInformation("Response {StatusCode} for {Method} {Path} {Headers}",
+                    context.Response?.StatusCode.ToString(), context.Request?.Method,
+                    context.Request?.Path.Value, context.Response?.Headers);
             }
             catch (Exception e)
             {

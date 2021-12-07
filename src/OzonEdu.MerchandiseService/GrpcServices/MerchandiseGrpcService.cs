@@ -5,6 +5,7 @@ using Grpc.Core;
 using MediatR;
 using OzonEdu.MerchandiseService.Grpc;
 using Google.Protobuf.WellKnownTypes;
+using OpenTracing;
 using OzonEdu.MerchandiseService.HttpModels;
 using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Commands;
 using OzonEdu.MerchandiseService.Infrastructure.ApplicationService.Queries;
@@ -15,14 +16,18 @@ namespace OzonEdu.MerchandiseService.GrpcServices
     public class MerchandiseGrpcService : MerchandiseGrpc.MerchandiseGrpcBase
     {
         private readonly IMediator _mediator;
+        private readonly ITracer _tracer;
 
-        public MerchandiseGrpcService(IMediator mediator)
+        public MerchandiseGrpcService(IMediator mediator, ITracer tracer)
         {
-            _mediator = mediator;
+            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+            _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
         }
 
         public override async Task<GetMerchOrderListResponse> GetReservedMerchOrdersByEmployeeId(GetMerchListRequest request, ServerCallContext context)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchandiseGrpcService)}.{nameof(GetReservedMerchOrdersByEmployeeId)}").StartActive();
+            
             var query = new GetReservedOrdersByEmployeeIdQuery(request.EmployeeId);
             var orderList = await _mediator.Send(query, context.CancellationToken);
 
@@ -52,6 +57,8 @@ namespace OzonEdu.MerchandiseService.GrpcServices
         public override async Task<GetMerchListResponse> GetMerchListByEmployeeId(GetMerchListRequest request,
             ServerCallContext context)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchandiseGrpcService)}.{nameof(GetMerchListByEmployeeId)}").StartActive();
+            
             var query = new GetCompletedOrdersByEmployeeIdQuery(request.EmployeeId);
             var skuList = await _mediator.Send(query, context.CancellationToken);
 
@@ -73,6 +80,8 @@ namespace OzonEdu.MerchandiseService.GrpcServices
         public override async Task<CreateMerchOrderResponse> CreateMerchOrder(CreateMerchOrderRequest request,
             ServerCallContext context)
         {
+            using var span = _tracer.BuildSpan($"{nameof(MerchandiseGrpcService)}.{nameof(CreateMerchOrder)}").StartActive();
+            
             var orderItems = new List<MerchItemDto>();
             foreach (var item in request.OrderItems)
             {

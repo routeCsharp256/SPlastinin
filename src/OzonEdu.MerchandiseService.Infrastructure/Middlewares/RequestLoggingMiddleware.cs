@@ -33,15 +33,8 @@ namespace OzonEdu.MerchandiseService.Infrastructure.Middlewares
         {
             try
             {
-                StringBuilder sb = new();
-                sb.Append("Request ")
-                    .Append(context.Request?.Method)
-                    .Append(" ")
-                    .Append(context.Request?.Path.Value)
-                    .Append(Environment.NewLine)
-                    .Append(context.Request?.Headers.FormatHeaders());
-                
-                _logger.LogInformation(sb.ToString());
+                _logger.LogInformation("Request {RequestMethod} {Path} {Headers}", 
+                    context.Request?.Method, context.Request?.Path.Value, context.Request?.Headers);
             }
             catch (Exception e)
             {
